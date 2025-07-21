@@ -6,9 +6,9 @@ const path = require('path')
 const app = express()
 const PORT = process.env.PORT || 3000
 
-app.use(express.static(path.join(__dirname, 'public')))
 app.use(cors())
 app.use(bodyParser.json())
+app.use(express.static(path.join(__dirname, 'public')))
 
 let messages = []
 
@@ -17,24 +17,29 @@ try {
     const raw = fs.readFileSync('messages.json', 'utf-8')
     messages = raw.trim() ? JSON.parse(raw) : []
   }
-} catch (err) {
-  console.error('Error reading messages.json:', err)
+} catch (e) {
+  console.error('Could not load messages.json:', e)
   messages = []
 }
+
+app.get('/messages', (req, res) => {
+  res.json(messages)
+})
 
 app.post('/send-message', (req, res) => {
   const { username, color, message } = req.body
   const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  
+  const newMessage = { username, color, message, timestamp }
+  messages.push(newMessage)
 
-  const newMsg = { username, color, message, timestamp }
-  messages.push(newMsg)
+  try {
+    fs.writeFileSync('messages.json', JSON.stringify(messages, null, 2))
+  } catch (e) {
+    console.error('Failed to save messages:', e)
+  }
 
-  fs.writeFileSync('messages.json', JSON.stringify(messages, null, 2))
   res.sendStatus(200)
-})
-
-app.get('/messages', (req, res) => {
-  res.json(messages)
 })
 
 app.get('*', (req, res) => {
@@ -42,5 +47,5 @@ app.get('*', (req, res) => {
 })
 
 app.listen(PORT, () => {
-  console.log(`ChitChat server live on http://localhost:${PORT}`)
+  console.log(`ChitChat is ALIVE on port ${PORT}`)
 })
