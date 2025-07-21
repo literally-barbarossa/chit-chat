@@ -4,17 +4,22 @@ const cors = require('cors')
 const fs = require('fs')
 const path = require('path')
 const app = express()
-const PORT = 3000
+const PORT = process.env.PORT || 3000
 
 app.use(express.static(path.join(__dirname, 'public')))
-
 app.use(cors())
 app.use(bodyParser.json())
 
 let messages = []
 
-if (fs.existsSync('messages.json')) {
-  messages = JSON.parse(fs.readFileSync('messages.json'))
+try {
+  if (fs.existsSync('messages.json')) {
+    const raw = fs.readFileSync('messages.json', 'utf-8')
+    messages = raw.trim() ? JSON.parse(raw) : []
+  }
+} catch (err) {
+  console.error('Error reading messages.json:', err)
+  messages = []
 }
 
 app.post('/send-message', (req, res) => {
@@ -25,7 +30,6 @@ app.post('/send-message', (req, res) => {
   messages.push(newMsg)
 
   fs.writeFileSync('messages.json', JSON.stringify(messages, null, 2))
-
   res.sendStatus(200)
 })
 
@@ -33,8 +37,10 @@ app.get('/messages', (req, res) => {
   res.json(messages)
 })
 
-app.listen(PORT, () => console.log(`ChitChat server live on http://localhost:${PORT}`))
-
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'))
+})
+
+app.listen(PORT, () => {
+  console.log(`ChitChat server live on http://localhost:${PORT}`)
 })
