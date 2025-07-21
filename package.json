@@ -5,6 +5,9 @@
   "main": "index.js",
   "author": "literally.barbarossa",
   "license": "ISC",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
